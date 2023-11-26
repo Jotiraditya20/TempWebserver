@@ -14,8 +14,11 @@ const allUsers = asyncHandler(async (req, res) => {
         ],
       }
     : {};
+    console.log('Search Keyword:', req.query.search);
+    console.log('MongoDB Query:', keyword);
 
   const users = await User.find(keyword).find({ _id: { $ne: req.user._id } });
+  console.log(users);
   res.send(users);
 });
 
