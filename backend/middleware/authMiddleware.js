@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel.js");
 const asyncHandler = require("express-async-handler");
+const dynamo_User = require("../models/userModel-dynamo");
 
 const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -15,7 +16,9 @@ const protect = asyncHandler(async (req, res, next) => {
       //decodes token id
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = await User.findById(decoded.id).select("-password");
+      //req.user = await User.findById(decoded.id).select("-password");
+
+      req.user =(await dynamo_User.User.scan().filter("_id").eq(decoded.id).attributes(["_id","name","email","pic","isAdmin"]).exec()).toJSON()[0];
 
       next();
     } catch (error) {

@@ -17,3 +17,26 @@ const connectDB = async () => {
 
 module.exports = connectDB;
 
+//Connecting to DB /*
+/*
+const {DynamoDBClient, ListTablesCommand} =require("@aws-sdk/client-dynamodb")
+require('dotenv').config();
+
+const credentials = {
+  region: process.env.REGION,
+  credentials: {
+    accessKeyId: process.env.ACCESSKEY,
+    secretAccessKey: process.env.SECRETKEY
+  }
+};
+const client=new DynamoDBClient(credentials);
+(async()=>{
+  const command=new ListTablesCommand({});
+  try{
+    const results = await client.send(command);
+    console.log(results.TableNames.join("\n"));
+  }catch(err){
+    console.log(err);
+  }
+})();
+module.exports = client;*/

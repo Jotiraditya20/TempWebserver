@@ -12,12 +12,15 @@
     "mern",
     "chat-app"
   ],
-  "author": "Piyush Agarwal",
+  "author": "Jotir",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.458.0",
+    "aws-sdk": "^2.1502.0",
     "bcryptjs": "^2.4.3",
     "colors": "^1.4.0",
     "dotenv": "^9.0.2",
+    "dynamoose": "^3.2.1",
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
     "jsonwebtoken": "^8.5.1",

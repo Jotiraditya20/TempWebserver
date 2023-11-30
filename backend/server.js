@@ -1,5 +1,6 @@
 const express = require("express");
 const connectDB = require("./config/db");
+const dynamo_connectDB = require("./config/dynamo-db");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
@@ -10,7 +11,7 @@ const path = require("path");
 dotenv.config();
 connectDB();
 const app = express();
-
+dynamo_connectDB();
 app.use(express.json()); // to accept json data
 
 // app.get("/", (req, res) => {
@@ -47,7 +48,7 @@ const PORT = process.env.PORT;
 
 const server = app.listen(
   PORT,
-  console.log(`Server running on PORT ${PORT}...`.yellow.bold)
+  console.log(`Server running on PORT ${PORT}...`)
 );
 
 const io = require("socket.io")(server, {

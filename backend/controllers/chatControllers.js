@@ -1,10 +1,13 @@
 const asyncHandler = require("express-async-handler");
+
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
-
+const dynamo_Chat = require("../models/chatModel-dynamo");
+const dynamo_User = require("../models/userModel-dynamo");
 //@description     Create or fetch One to One Chat
 //@route           POST /api/chat/
 //@access          Protected
+//Find
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
 
@@ -20,9 +23,24 @@ const accessChat = asyncHandler(async (req, res) => {
       { users: { $elemMatch: { $eq: userId } } },
     ],
   })
-    .populate("users", "-password")
+    .populate("users", "-password")//To
     .populate("latestMessage");
+    console.log(isChat);
+  //dynamo
+  try{
+    console.log(userId.toString());
+    console.log(req.user._id);
 
+  console.log("Chat Sacn");
+  const dynamo_chats= (await dynamo_Chat.Chat.scan().filter("isGroupChat").eq(false).exec()).toJSON();
+  const filtered_dynamo_chat = dynamo_chats.filter(Element =>
+    Element.users.includes(userId.toString()) && Element.users.includes(req.user._id.toString())
+  );
+  const scanned_chat=(await (await dynamo_Chat.Chat.scan().filter("_id").eq(filtered_dynamo_chat[0]._id).exec()).populate()).toJSON();
+  }catch(e){
+    console(e);
+  }
+//Comeback
   isChat = await User.populate(isChat, {
     path: "latestMessage.sender",
     select: "name pic email",
@@ -37,17 +55,29 @@ const accessChat = asyncHandler(async (req, res) => {
       users: [req.user._id, userId],
     };
 
+
     try {
       const createdChat = await Chat.create(chatData);
       const FullChat = await Chat.findOne({ _id: createdChat._id }).populate(
         "users",
         "-password"
       );
+      //Dynamo
+      const id=createdChat._id;
+      chatData._id = id.toString();
+      chatData.users[0]=chatData.users[0].toString();
+      console.log(chatData);
+      const createdChat_dynamo = await dynamo_Chat.Chat.create(chatData);
+      const pop_created = (await createdChat_dynamo.populate()).toJSON();
+      console.log(pop_created);
+      console.log("Create Chat Itwm")
       res.status(200).json(FullChat);
     } catch (error) {
       res.status(400);
+      console.log(error);
       throw new Error(error.message);
     }
+
   }
 });
 

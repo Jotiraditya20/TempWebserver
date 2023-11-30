@@ -7,12 +7,15 @@ const {v4:uuidv4}=require('uuid');
 //@route           GET /api/user?search=
 //@access          Public
 const allUsers = asyncHandler(async (req, res) => {
-  //Dynamo
+    // console.log('Search Keyword:', req.query.search);
+    // console.log('MongoDB Query:', keyword);
+
   const dynamo_users=await dynamo_User.User.scan().filter("name").contains(req.query.search).or().filter("email").contains(req.query.search).exec();
-  const users = dynamo_users.toJSON();
+
+  let users = dynamo_users.toJSON();
+  users = users.filter(Element=>Element._id!== req.user._id);
   console.log(users);
   res.send(users);
-
 });
 
 //@description     Register new user
@@ -25,62 +28,42 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Please Enter all the Feilds");
   }
-  const userExists = await User.findOne({ email });
-  if (userExists) {
+
+  const userExists = (await dynamo_User.User.scan().filter('email').eq(email).attributes(["email"]).exec()).toJSON();
+  console.log(`RegisterUser UserExsists:${JSON.stringify(userExists)}`);
+  if (userExists.length !== 0) { 
     res.status(400);
     throw new Error("User already exists");
   }
-
-  const user = await User.create({
-    name,
-    email,
-    password,
-    pic,
-  });
-
-  if (user) {
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      pic: user.pic,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(400);
-    throw new Error("User not found");
-  }
-
+  const password1 = await dynamo_User.save_dynamo(password);
+  console.log(password1);
   //Dynamo
   const idd=uuidv4().toString();
   try{
-  const dynamo_user = await dynamo_User.User.create({
-    _id : user._id.toString(),
-    name : name,
-    email : email,
-    password : password,
-    pic : pic
-  });
-  console.log("created");
+    const user = await dynamo_User.User.create({
+      _id : idd,
+      name : name,
+      email : email,
+      password : password1,
+      pic : pic
+    });
+    console.log("created");
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        pic: user.pic,
+        token: generateToken(user._id),
+      });
+    } else {
+      res.status(400);
+      throw new Error("User not found");
+    }
   }catch(e){
     console.log(e);
   }
-
-  if (user) {
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      pic: user.pic,
-      token: generateToken(user._id),
-    });
-  } else {
-    res.status(400);
-    throw new Error("User not found");
-  }
-  
 });
 
 //@description     Auth the user
@@ -89,12 +72,12 @@ const registerUser = asyncHandler(async (req, res) => {
 const authUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+  const dynamo_user=await dynamo_User.User.scan().filter("email").eq(email).exec();
+  const user=dynamo_user.toJSON()[0];
   console.log(user);
-  let dynamo_user=await dynamo_User.User.scan().filter("email").eq(email).exec();
-  dynamo_user=dynamo_user.toJSON();
-  console.log(dynamo_user[0]);
-  if (user && (await user.matchPassword(password))) {
+  console.log(password);
+  console.log(email);
+  if (user && (await dynamo_User.matchpassword_dynamo(password,user))) {
     res.json({
       _id: user._id,
       name: user.name,

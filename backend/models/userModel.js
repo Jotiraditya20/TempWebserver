@@ -37,3 +37,46 @@ userSchema.pre("save", async function (next) {
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
+
+/*
+const { DynamoDBClient, PutItemCommand ,CreateTableCommand} = require("@aws-sdk/client-dynamodb");
+require('dotenv').config();
+const credentials = {
+    region: process.env.REGION,
+    credentials: {
+      accessKeyId: process.env.ACCESSKEY,
+      secretAccessKey: process.env.SECRETKEY
+    }
+  };
+const dynamoDBClient = new DynamoDBClient(credentials);
+const createUserTable =( async () => {
+    const params = {
+      TableName: "users",
+      AttributeDefinitions: [
+        { AttributeName: "_id", AttributeType: "S" },
+        { AttributeName: "pic", AttributeType: "S" },
+        { AttributeName: "isAdmin", AttributeType: "BOOL" },
+        { AttributeName: "name", AttributeType: "S" },
+        { AttributeName: "email", AttributeType: "S" },
+        { AttributeName: "password", AttributeType: "S" }
+      ],
+      KeySchema: [
+        { AttributeName: "_id", KeyType: "HASH" },// HASH = partition key
+        { AttributeName: "email", KeyType: "RANGE" },
+         
+      ],
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 5,
+        WriteCapacityUnits: 5,
+      },
+    };
+  
+    try {
+      await dynamoDBClient.send(new CreateTableCommand(params));
+      console.log("Table created successfully!");
+    } catch (err) {
+      console.error("Error creating table:", err);
+    }
+});
+module.exports=createUserTable;
+*/
