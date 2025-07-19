@@ -46,22 +46,22 @@ committer_username = commit_data.get('committer', {}).get('login', 'Unknown')
 summary = summarize_code_change(diff_code_text)
 
 # 🔍 Print Required Info
-print("===== GitHub Commit Info =====")
+'''print("===== GitHub Commit Info =====")
 print(f"📦 Repository: {repo_url}")
 print(f"🌿 Branch: {branch}")
 print(f"🔐 Commit ID: {commit_sha}")
 print(f"🔗 Commit URL: {commit_url}")
 print("===== Code Diff Summary =====")
-print(summary)
+print(summary)'''
 
 summary_of_code = {
     "repo_meta": {
-        "repo": GITHUB_REPOSITORY,
+        "repo": repo_url,
         "branch": branch,
         "author": committer_username
     },
-    "commit_id": "a1b2c3d4e5",
-    "summary": "Refactored login logic and added tests.",
+    "commit_id": commit_sha,
+    "summary": summary,
     "codediff": diff_code_text,
     "timestamp": datetime.now()  # must be datetime, not string
 }
