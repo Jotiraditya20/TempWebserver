@@ -54,9 +54,6 @@ print(f"🔗 Commit URL: {commit_url}")
 print("===== Code Diff Summary =====")
 print(summary)
 
-# Add summary to DB
-AddSummaryToDB()
-
 summary_of_code = {
     "repo_meta": {
         "repo": GITHUB_REPOSITORY,
