@@ -17,7 +17,7 @@ summary = {
 
 def AddSummaryToDB(data = summary):
     load_dotenv()
-    MONGO_URI = os.getenv("MONGO_URI")
+    MONGO_URI = os.getenv("MONGODB_URI")
     if not MONGO_URI:
         print("MONGODB_URI not Found!")
         exit(0)
