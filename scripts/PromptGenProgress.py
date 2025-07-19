@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
 
-def generate_task_commit_prompt(task_ids):
+def generate_task_commit_prompt(git_username):
     load_dotenv()
     MONGODB_URI = os.getenv("MONGODB_URI")
     client = MongoClient(MONGODB_URI)
@@ -13,6 +13,15 @@ def generate_task_commit_prompt(task_ids):
     tasks_col = db["Tasks"]
     reasons_col = db["Reasons"]
 
+    # Step 1: Get the user document
+    user = users_col.find_one({"gitname": git_username})
+    if not user:
+        print("❌ User not found.")
+        exit(1)
+
+    task_ids = user.get("Taskids", [])
+
+    # Step 2: Build prompt lines
     prompt_lines = []
 
     for idx, task_id in enumerate(task_ids):
@@ -36,4 +45,6 @@ def generate_task_commit_prompt(task_ids):
 
     # Step 3: Print prompt
     final_prompt = "\n".join(prompt_lines)
+    print("🔹 Gemini Prompt:\n")
+    print(final_prompt)
     return final_prompt
