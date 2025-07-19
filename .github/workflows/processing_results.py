@@ -2,7 +2,7 @@ import re
 
 def clean_summary(summary_text: str) -> str:
     # Remove AI intro phrases
-    summary_text = re.sub(r"(?i)^of course\..*?analysis of the code changes\.\s*", "", summary_text)
+    summary_text = re.sub(r"(?i)^of course[.,]?\s+.*?analysis of the code changes\.\s*", "", summary_text)
 
     # Remove markdown headings (###) and bold (**)
     summary_text = re.sub(r"###\s*", "", summary_text)      # Remove headings
