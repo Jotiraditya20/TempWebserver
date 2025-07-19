@@ -29,7 +29,7 @@ def generate_task_commit_prompt(git_username):
             task_id = ObjectId(task_id)
 
         task = tasks_col.find_one({"_id": task_id})
-        task_desc = task["task_description"] if task else "No description found"
+        task_desc = task["description"] if task else "No description found"
 
         # Fetch all related commit_ids from Reasons collection
         reason_docs = reasons_col.find({"task_id": task_id})
