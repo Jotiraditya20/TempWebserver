@@ -19,7 +19,7 @@ def generate_task_commit_prompt(git_username):
         print("❌ User not found.")
         exit(1)
     print(git_username)
-    task_ids = user.get("Taskids", [])
+    task_ids = user.get("taskIds", [])
     print(task_ids)
     # Step 2: Build prompt lines
     prompt_lines = []
