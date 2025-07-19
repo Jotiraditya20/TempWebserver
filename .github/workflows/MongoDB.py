@@ -10,12 +10,13 @@ summary = {
         "branch": "master",
         "author": "Jotiraditya20"
     },
+    "diffcode": "This is a test",
     "commit_id": "a1b2c3d4e5",
     "summary": "Refactored login logic and added tests.",
     "timestamp": datetime.now()  # must be datetime, not string
 }
 
-def AddSummaryToDB(data = summary):
+def AddSummaryToDB(data=summary):
     load_dotenv()
     MONGO_URI = os.getenv("MONGODB_URI")
     if not MONGO_URI:
@@ -24,6 +25,6 @@ def AddSummaryToDB(data = summary):
     client = MongoClient(MONGO_URI)
     db = client["AI_Results"]
     collection = db["summaries"]
-    result = collection.insert_one(summary)
+    result = collection.insert_one(data)
     print(f"✅ Inserted into time series collection with ID: {result.inserted_id}")
     return None
