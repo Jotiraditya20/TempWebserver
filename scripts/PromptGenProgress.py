@@ -20,7 +20,7 @@ def generate_task_commit_prompt(git_username):
         exit(1)
 
     task_ids = user.get("Taskids", [])
-
+    print(task_ids)
     # Step 2: Build prompt lines
     prompt_lines = []
 
