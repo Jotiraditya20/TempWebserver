@@ -3,52 +3,61 @@ from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
 
-def get_git_username():
-    import subprocess
-    result = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True)
-    return result.stdout.strip()
-
-def fetch_prompt():
+def generate_task_progress_prompt(git_username):
     load_dotenv()
     MONGODB_URI = os.getenv("MONGODB_URI")
     client = MongoClient(MONGODB_URI)
     db = client["AI_Results"]
-    
+
+    users_col = db["Users"]
     tasks_col = db["Tasks"]
-    commits_col = db["Commits"]
+    reasons_col = db["Reasons"]
+    git_username = git_username.strip()
 
-    git_user = get_git_username()
+    # Step 1: Get user
+    user = users_col.find_one({"gitname": git_username})
+    if not user:
+        print("❌ User not found.")
+        return ""
 
-    tasks = list(tasks_col.find({"gitname": git_user}))
-    if not tasks:
-        print("❌ No tasks found for user:", git_user)
-        return
+    task_ids = user.get("taskIds", [])
+    prompt_blocks = []
 
-    prompt_lines = [
-        "You are an AI code reviewer helping track development progress.",
-        "",
-        "I have multiple tasks assigned to me, each with a task description and the list of code changes (diffs) made so far related to one of the task.",
-        "",
-        "Please analyze and return a JSON-style response with the following keys for each task:",
-        "",
-        "taskId: the unique ID of the task.",
-        "progress percentage: Estimate from 0 to 100 how much of the task seems complete based on the code provided. If already fully implemented, use 100.",
-        "progress helpfulness: True or False – does the new code help towards completing the task?",
-        "relevance: Explain how relevant the code is to the task.",
-        "reason: A short explanation for your estimate and judgment.",
-        "",
-        "My Tasks:"
-    ]
+    for task_id in task_ids:
+        if isinstance(task_id, str):
+            task_id = ObjectId(task_id)
 
-    for task in tasks:
-        task_id = task["_id"]
-        description = task.get("description", "No description")
-        commits = list(commits_col.find({"task_id": task_id}))
-        code_diffs = "\n\n".join(commit.get("diff", "No diff") for commit in commits) if commits else "None"
-        prompt_lines.append(f"\ntaskId: {str(task_id)}\nDescription: {description}\nCode Diff: {code_diffs}")
+        task = tasks_col.find_one({"_id": task_id})
+        task_desc = task.get("description", "No description found")
 
-    prompt = "\n".join(prompt_lines)
+        # Collect all related commit_ids from Reasons collection
+        reason_docs = reasons_col.find({"task_id": task_id})
+        commit_ids = [doc.get("commit_id") for doc in reason_docs if doc.get("commit_id")]
+
+        code_diff_text = " + ".join(commit_ids) if commit_ids else "None"
+
+        prompt_blocks.append(f"""
+taskId: {str(task_id)}
+Description: {task_desc}
+Code Diff IDs: {code_diff_text}
+""".strip())
+
+    full_prompt = """
+You are an AI code reviewer helping track development progress.
+
+Analyze each task below and return the following for **each** task in this JSON-style format:
+
+{{
+  "taskId": "<task_id>",
+  "progress percentage": <0-100>,
+  "progress helpfulness": true/false,
+  "relevance": "<reason why this commit/code is or isn't relevant to the task>",
+  "reason": "<short reasoning for progress percentage and helpfulness>"
+}}
+
+Tasks:
+""" + "\n\n".join(prompt_blocks)
+
     print("🔹 Gemini Prompt:\n")
-    print(prompt)
-
-# Call it
+    print(full_prompt)
+    return full_prompt
