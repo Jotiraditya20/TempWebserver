@@ -1,5 +1,5 @@
 import os
-import datetime
+from datetime import datetime
 import requests
 from summarizer import summarize_code_change
 from MongoDB import AddSummaryToDB
