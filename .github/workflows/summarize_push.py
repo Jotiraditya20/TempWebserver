@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import requests
 from summarizer import summarize_code_change
+from processing_results import clean_summary
 from MongoDB import AddSummaryToDB
 from dotenv import load_dotenv
 import json
@@ -54,6 +55,8 @@ print(f"🔗 Commit URL: {commit_url}")
 print("===== Code Diff Summary =====")
 print(summary)'''
 
+#Cleaning Summary From AI
+summary = clean_summary(summary)
 summary_of_code = {
     "repo_meta": {
         "repo": repo_url,
@@ -65,4 +68,5 @@ summary_of_code = {
     "codediff": diff_code_text,
     "timestamp": datetime.now()  # must be datetime, not string
 }
+
 AddSummaryToDB(summary_of_code)
