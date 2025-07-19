@@ -3,48 +3,52 @@ from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
 
-def generate_task_commit_prompt(git_username):
+def get_git_username():
+    import subprocess
+    result = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True)
+    return result.stdout.strip()
+
+def fetch_prompt():
     load_dotenv()
     MONGODB_URI = os.getenv("MONGODB_URI")
     client = MongoClient(MONGODB_URI)
     db = client["AI_Results"]
-
-    users_col = db["Users"]
+    
     tasks_col = db["Tasks"]
-    reasons_col = db["Reasons"]
-    git_username = git_username.strip()
-    # Step 1: Get the user document
-    user = users_col.find_one({"gitname": git_username})
-    if not user:
-        print("❌ User not found.")
-        exit(1)
-    print(git_username)
-    task_ids = user.get("taskIds", [])
-    print(task_ids)
-    # Step 2: Build prompt lines
-    prompt_lines = []
+    commits_col = db["Commits"]
 
-    for idx, task_id in enumerate(task_ids):
-        if isinstance(task_id, str):
-            task_id = ObjectId(task_id)
+    git_user = get_git_username()
 
-        task = tasks_col.find_one({"_id": task_id})
-        task_desc = task["description"] if task else "No description found"
+    tasks = list(tasks_col.find({"gitname": git_user}))
+    if not tasks:
+        print("❌ No tasks found for user:", git_user)
+        return
 
-        # Fetch all related commit_ids from Reasons collection
-        reason_docs = reasons_col.find({"task_id": task_id})
-        commit_ids = [doc.get("commit_id") for doc in reason_docs if doc.get("commit_id")]
+    prompt_lines = [
+        "You are an AI code reviewer helping track development progress.",
+        "",
+        "I have multiple tasks assigned to me, each with a task description and the list of code changes (diffs) made so far related to one of the task.",
+        "",
+        "Please analyze and return a JSON-style response with the following keys for each task:",
+        "",
+        "taskId: the unique ID of the task.",
+        "progress percentage: Estimate from 0 to 100 how much of the task seems complete based on the code provided. If already fully implemented, use 100.",
+        "progress helpfulness: True or False – does the new code help towards completing the task?",
+        "relevance: Explain how relevant the code is to the task.",
+        "reason: A short explanation for your estimate and judgment.",
+        "",
+        "My Tasks:"
+    ]
 
-        if commit_ids:
-            code_diff = " + ".join(commit_ids)
-        else:
-            code_diff = "None"
+    for task in tasks:
+        task_id = task["_id"]
+        description = task.get("description", "No description")
+        commits = list(commits_col.find({"task_id": task_id}))
+        code_diffs = "\n\n".join(commit.get("diff", "No diff") for commit in commits) if commits else "None"
+        prompt_lines.append(f"\ntaskId: {str(task_id)}\nDescription: {description}\nCode Diff: {code_diffs}")
 
-        prompt_line = f"{idx}: {str(task_id)}: {task_desc} : Code diff {code_diff}"
-        prompt_lines.append(prompt_line)
-
-    # Step 3: Print prompt
-    final_prompt = "\n".join(prompt_lines)
+    prompt = "\n".join(prompt_lines)
     print("🔹 Gemini Prompt:\n")
-    print(final_prompt)
-    return final_prompt
+    print(prompt)
+
+# Call it
