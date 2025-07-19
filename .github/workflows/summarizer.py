@@ -3,15 +3,13 @@ import time
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# Load API keys from .env
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Gemini model settings
-MODEL_NAME = "gemini-2.5-pro"  # Use "gemini-2.5-pro" when available in SDK
+MODEL_NAME = "gemini-2.5-pro"  
 MAX_TOKENS_PER_MINUTE = 250000
 MAX_REQUESTS_PER_MINUTE = 5
-MIN_DELAY_BETWEEN_REQUESTS = 60 / MAX_REQUESTS_PER_MINUTE  # 12 seconds
+MIN_DELAY_BETWEEN_REQUESTS = 60 / MAX_REQUESTS_PER_MINUTE  
 MAX_LINES_PER_CHUNK = 300
 
 last_call_time = 0

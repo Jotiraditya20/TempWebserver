@@ -1,4 +1,5 @@
 import os
+import datetime
 import requests
 from summarizer import summarize_code_change
 from MongoDB import AddSummaryToDB
@@ -8,17 +9,28 @@ import json
 load_dotenv()
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
+GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")  # e.g. Jotiraditya20/TempWebserver
 GITHUB_EVENT_PATH = os.getenv("GITHUB_EVENT_PATH")
 
 # Load GitHub event JSON
 with open(GITHUB_EVENT_PATH, 'r') as f:
     event = json.load(f)
 
-commit_sha = event['after']
-repo_api = f"https://api.github.com/repos/{GITHUB_REPOSITORY}"
-commit_url = f"{repo_api}/commits/{commit_sha}"
+commit_sha = event.get('after')
+branch_ref = event.get('ref')  # e.g. 'refs/heads/master'
+branch = branch_ref.replace('refs/heads/', '') if branch_ref else 'unknown'
+
+# Construct repo URL
+repo_url = f"https://github.com/{GITHUB_REPOSITORY}"
+
+# Get commit diff
+commit_url = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/commits/{commit_sha}"
+headers = {
+    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github.v3.diff"
+}
+diff_response = requests.get(commit_url, headers=headers)
+diff_code_text = diff_response.text
 
 # Get commit details (JSON)
 headers = {
@@ -27,28 +39,33 @@ headers = {
 }
 response = requests.get(commit_url, headers=headers)
 commit_data = response.json()
-
-# Extract committer info
 committer_name = commit_data.get('commit', {}).get('committer', {}).get('name', 'Unknown')
 committer_username = commit_data.get('committer', {}).get('login', 'Unknown')
 
-# Optional: Get diff content
-diff_headers = {
-    "Authorization": f"Bearer {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github.v3.diff"
-}
-diff_response = requests.get(commit_url, headers=diff_headers)
-diff_code_text = diff_response.text
-
-# Summarize and print
+# Summarize
 summary = summarize_code_change(diff_code_text)
 
-print("🔍 Commit Info")
-print(f"Committer Name: {committer_name}")
-print(f"Committer GitHub Username: {committer_username}")
-print(f"Commit URL: {commit_url}")
-print("----- DIFF TEXT -----")
-print(diff_code_text)
-print("----- SUMMARY -----")
+# 🔍 Print Required Info
+print("===== GitHub Commit Info =====")
+print(f"📦 Repository: {repo_url}")
+print(f"🌿 Branch: {branch}")
+print(f"🔐 Commit ID: {commit_sha}")
+print(f"🔗 Commit URL: {commit_url}")
+print("===== Code Diff Summary =====")
 print(summary)
 
+# Add summary to DB
+AddSummaryToDB()
+
+summary_of_code = {
+    "repo_meta": {
+        "repo": GITHUB_REPOSITORY,
+        "branch": branch,
+        "author": committer_username
+    },
+    "commit_id": "a1b2c3d4e5",
+    "summary": "Refactored login logic and added tests.",
+    "codediff": diff_code_text,
+    "timestamp": datetime.now()  # must be datetime, not string
+}
+print(summary_of_code)
