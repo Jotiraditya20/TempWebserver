@@ -1,0 +1,31 @@
+name: AI Commit Summarizer
+on:
+  push:
+    branches:
+      "master"
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/workflows/requirements.txt
+
+      - name: Summarize Commit
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MONGODBPUBLICKEY: ${{ secrets.MONGODBPUBLICKEY }}
+          MONGODBPRIVATEKEY: ${{ secrets.MONGODBPRIVATEKEY }}
+        run: python .github/workflows/summarize_push.py
+      

@@ -1,0 +1,4 @@
+google-generativeai
+requests
+python-dotenv
+pymongo[srv]==3.11
