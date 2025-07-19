@@ -4,4 +4,4 @@ from PromptGenProgress import fetch_prompt
 
 git_username = os.getenv("GIT_USERNAME")
 
-ruless_prompt = fetch_prompt(git_username)
+ruless_prompt = fetch_prompt()
