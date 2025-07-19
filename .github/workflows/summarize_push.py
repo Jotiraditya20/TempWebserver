@@ -65,4 +65,4 @@ summary_of_code = {
     "codediff": diff_code_text,
     "timestamp": datetime.now()  # must be datetime, not string
 }
-print(summary_of_code)
+AddSummaryToDB(summary_of_code)
