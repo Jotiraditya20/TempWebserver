@@ -12,7 +12,7 @@ def generate_task_commit_prompt(git_username):
     users_col = db["Users"]
     tasks_col = db["Tasks"]
     reasons_col = db["Reasons"]
-
+    git_username = git_username.strip()
     # Step 1: Get the user document
     user = users_col.find_one({"gitname": git_username})
     if not user:
