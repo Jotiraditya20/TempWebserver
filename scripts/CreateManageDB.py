@@ -144,6 +144,8 @@ def delete_task(task_id):
 
 #-----Edit %---------
 def update_completion_by_index(gitname, index, new_percent):
+    users_col = db["Users"]
+    history_col = db["TaskHistory"]
     if not (0 <= new_percent <= 100):
         print("❌ Completion must be between 0 and 100.")
         return
@@ -197,8 +199,8 @@ if __name__ == "__main__":
     #create_user("Jotir Aditya", "Jotiraditya20")
 
     # ✅ Create task and link it with 25% done
-    #task_id = Create_Task("Build CLI login system for the frontend", "Make a CLI app to register/login using JSON storage and password hashing.", "Jotiraditya20")
-    #add_task_to_user("Jotiraditya20", task_id)
+    task_id = Create_Task("Build CLI login system for the frontend", "Make a CLI app to register/login using JSON storage and password hashing.", "Jotiraditya20")
+    add_task_to_user("Jotiraditya20", task_id)
     ''''''
     # 🗑️ Delete task (if needed)
     #delete_task("687bec215db2915eea231d17")
