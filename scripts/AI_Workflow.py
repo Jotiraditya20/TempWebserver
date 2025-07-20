@@ -1,15 +1,35 @@
 import os
-import time
 import google.generativeai as genai
 from get_user_task_ids import get_user_task_ids
 from PromptGenProgress import generate_task_progress_prompt
+from dotenv import load_dotenv
+import google.generativeai as genai
+import time
 
-# --- Config ---
-MODEL_NAME = "gemini-1.5-pro-latest"
-MIN_DELAY_BETWEEN_REQUESTS = 12  # seconds (5 RPM)
+# Load environment variables (ensure you have GOOGLE_API_KEY and GIT_USERNAME in .env)
+load_dotenv()
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# Step 1: Get GitHub username from env
+git_username = os.getenv("GIT_USERNAME")
+if not git_username:
+    print("❌ GIT_USERNAME not found in .env or environment.")
+    exit(1)
+
+# Step 2: Generate the Gemini prompt
+prompt = generate_task_progress_prompt(git_username)
+
+if not prompt:
+    print("❌ Could not generate prompt.")
+    exit(1)
+
+# --- Constants ---
+MODEL_NAME = "gemini-2.5-pro"
+MIN_DELAY_BETWEEN_REQUESTS = 12       # Rate limit: 5 requests per minute
 last_call_time = 0
 
-# --- Rate Limiter ---
+
+# --- Rate Limiting Function ---
 def rate_limited_call():
     global last_call_time
     now = time.time()
@@ -22,33 +42,16 @@ def rate_limited_call():
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel(MODEL_NAME)
 
-# --- Main Logic ---
-def main():
-    git_username = input("Enter your GitHub username: ").strip()
-    
-    if not git_username:
-        print("❌ GitHub username is required.")
-        return
-
-    # 1. Get user's tasks
-    tasks = get_user_task_ids(git_username)
-    if not tasks:
-        print(f"❌ No tasks found for user: {git_username}")
-        return
-
-    # 2. Generate prompt
-    prompt = generate_task_progress_prompt(git_username)
-    print("📝 Prompt sent to Gemini:\n")
-    print(prompt)
-    
-    # 3. Rate-limited call to Gemini
+# --- Function to Call Gemini ---
+def send_prompt_to_gemini(prompt_text):
     rate_limited_call()
     try:
-        response = model.generate_content(prompt)
-        print("\n✅ Gemini Task Progress Report:\n")
+        response = model.generate_content(prompt_text)
+        print("\n🧠 Gemini Response:\n")
         print(response.text.strip())
     except Exception as e:
-        print(f"\n[ERROR calling Gemini]: {e}")
+        print(f"[❌ Gemini Error]: {e}")
 
+# --- Main ---
 if __name__ == "__main__":
-    main()
+    send_prompt_to_gemini(prompt)
