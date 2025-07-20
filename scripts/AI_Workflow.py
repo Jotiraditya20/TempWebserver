@@ -54,3 +54,4 @@ def send_prompt_to_gemini(prompt_text):
     return response
 
 response = send_prompt_to_gemini(prompt)
+print(response)
