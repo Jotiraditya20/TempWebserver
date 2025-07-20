@@ -12,11 +12,9 @@ def generate_task_progress_prompt(git_username):
     users_col = db["Users"]
     tasks_col = db["Tasks"]
     reasons_col = db["Reasons"]
-    summaries_col = db["summaries"]
-
+    summaries_col = db["summaries"]  # ✅ Add summaries collection
     git_username = git_username.strip()
 
-    # Step 1: Get user
     user = users_col.find_one({"gitname": git_username})
     if not user:
         print("❌ User not found.")
@@ -32,18 +30,19 @@ def generate_task_progress_prompt(git_username):
         task = tasks_col.find_one({"_id": task_id})
         task_desc = task.get("description", "No description found")
 
-        # Get related commit IDs from Reasons collection
+        # 🔁 Find all reason documents for this task
         reason_docs = reasons_col.find({"task_id": task_id})
         commit_ids = [doc.get("commit_id") for doc in reason_docs if doc.get("commit_id")]
 
-        # Fetch corresponding codediffs from summaries
+        # 🧠 Collect code diffs from summaries
         code_diffs = []
-        for cid in commit_ids:
-            summary_doc = summaries_col.find_one({"commit_id": cid})
-            if summary_doc and "codediff" in summary_doc:
-                code_diffs.append(f"Commit: {cid}\n{summary_doc['codediff']}")
+        for commit_id in commit_ids:
+            summary_doc = summaries_col.find_one({"commit_id": commit_id})
+            if summary_doc and summary_doc.get("codediff"):
+                code_diffs.append(summary_doc["codediff"])
 
-        code_diff_text = "\n\n".join(code_diffs) if code_diffs else "None"
+        # Join or fallback
+        code_diff_text = "\n---\n".join(code_diffs) if code_diffs else "None"
 
         prompt_blocks.append(f"""
 taskId: {str(task_id)}
