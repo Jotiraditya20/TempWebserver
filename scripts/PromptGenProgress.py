@@ -11,8 +11,7 @@ def generate_task_progress_prompt(git_username):
 
     users_col = db["Users"]
     tasks_col = db["Tasks"]
-    reasons_col = db["Reasons"]
-    summaries_col = db["summaries"]  # ✅ Add summaries collection
+    summaries_col = db["summaries"]  # ✅ Only summaries needed now
     git_username = git_username.strip()
 
     user = users_col.find_one({"gitname": git_username})
@@ -28,11 +27,11 @@ def generate_task_progress_prompt(git_username):
             task_id = ObjectId(task_id)
 
         task = tasks_col.find_one({"_id": task_id})
-        task_desc = task.get("description", "No description found")
+        if not task:
+            continue
 
-        # 🔁 Find all reason documents for this task
-        reason_docs = reasons_col.find({"task_id": task_id})
-        commit_ids = [doc.get("commit_id") for doc in reason_docs if doc.get("commit_id")]
+        task_desc = task.get("description", "No description found")
+        commit_ids = task.get("commits", [])  # 🔁 Directly use commits field
 
         # 🧠 Collect code diffs from summaries
         code_diffs = []
@@ -41,7 +40,6 @@ def generate_task_progress_prompt(git_username):
             if summary_doc and summary_doc.get("codediff"):
                 code_diffs.append(summary_doc["codediff"])
 
-        # Join or fallback
         code_diff_text = "\n---\n".join(code_diffs) if code_diffs else "None"
 
         prompt_blocks.append(f"""
