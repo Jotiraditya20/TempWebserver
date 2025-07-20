@@ -4,6 +4,7 @@ from get_user_task_ids import get_user_task_ids
 from PromptGenProgress import generate_task_progress_prompt
 from dotenv import load_dotenv
 import google.generativeai as genai
+from Taskperedit import add_reason_to_task
 import time
 
 # Load environment variables (ensure you have GOOGLE_API_KEY and GIT_USERNAME in .env)
@@ -55,3 +56,5 @@ def send_prompt_to_gemini(prompt_text):
 
 response = send_prompt_to_gemini(prompt)
 print(response)
+
+#Filter The response into a array and set datatypes
