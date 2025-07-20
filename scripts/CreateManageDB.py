@@ -197,12 +197,8 @@ if __name__ == "__main__":
     #create_user("Jotir Aditya", "Jotiraditya20")
 
     # ✅ Create task and link it with 25% done
-    '''task_id = Create_Task(
-        "Build CLI login system",
-        "Make a CLI app to register/login using JSON storage and password hashing.",
-        "Jotiraditya20"
-    )'''
+    #task_id = Create_Task("Build CLI login system for the frontend", "Make a CLI app to register/login using JSON storage and password hashing.", "Jotiraditya20")
     #add_task_to_user("Jotiraditya20", task_id)
-
+    ''''''
     # 🗑️ Delete task (if needed)
     #delete_task("687bec215db2915eea231d17")

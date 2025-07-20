@@ -47,11 +47,10 @@ def send_prompt_to_gemini(prompt_text):
     rate_limited_call()
     try:
         response = model.generate_content(prompt_text)
+        response = response.text.strip()
         print("\n🧠 Gemini Response:\n")
-        print(response.text.strip())
     except Exception as e:
         print(f"[❌ Gemini Error]: {e}")
+    return response
 
-# --- Main ---
-if __name__ == "__main__":
-    send_prompt_to_gemini(prompt)
+response = send_prompt_to_gemini(prompt)
